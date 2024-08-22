@@ -9,12 +9,14 @@ const path = require('path');
 
 const authRoutes = require('./routes/auth');
 const chatRoutes = require('./routes/chat');
-
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public')));
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 const User = require('./models/User');
 const Chat = require('./models/Chat'); 
+
 
 // Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
