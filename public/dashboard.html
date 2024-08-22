@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        .cuscor {
+            cursor: pointer;
+        }
+    </style>
+    <script>
+        const socket = io();
+        var you;
+        var me;
+
+        // document.addEventListener('DOMContentLoaded', () => {
+        //     const chatId = document.getElementById('chatId').value;
+        //     const messageInput = document.getElementById('messageInput');
+        //     const sendMessageButton = document.getElementById('sendMessage');
+        //     const messagesContainer = document.getElementById('messages');
+
+        //     sendMessageButton.addEventListener('click', () => {
+        //         const message = messageInput.value;
+        //         if (message && chatId.match(/^[0-9a-fA-F]{24}$/)) {
+        //             socket.emit('private message', { chatId, content: message });
+        //             messageInput.value = '';
+        //         } else {
+        //             console.error('Invalid chatId or empty message');
+        //         }
+        //     });
+
+        //     socket.on('private message', (data) => {
+        //         if (data.chatId === chatId) {
+        //             const messageElement = document.createElement('div');
+        //             messageElement.textContent = `${data.sender}: ${data.content}`;
+        //             messagesContainer.appendChild(messageElement);
+        //             messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        //         }
+        //     });
+        // });
+
+        $(document).ready(function () {
+            // Fetch users on page load
+            $("#hide-message").addClass("d-none");
+            $.ajax({
+                url: '/chat/users',  // Adjust this URL based on your route setup
+                method: 'GET',
+                success: function (data) {
+                    let userList = $('#userList');
+                    userList.empty();  // Clear existing user list
+
+                    data.forEach(user => {
+                        userList.append(
+
+                            `<div class="user mt-2 cuscor ms-4" data-id="${user._id}" data-value="${user.name}">${user.name}</div>
+                <hr class=mt-2>  `
+
+
+                        );
+                    });
+                },
+                error: function (err) {
+                    console.error('Error fetching users:', err);
+                }
+            });
+
+            // Handle user click event
+            $('#userList').on('click', '.user', function () {
+                let userId = $(this).data('id'); 
+                you=$(this).data('value');
+                me= userId;     
+                $("#hide-message").removeClass("d-none");
+                loadChat(userId);
+            });
+
+            function loadChat(userId) {
+                $.ajax({
+                    url: `/chat/${userId}`,
+                    method: 'GET',
+                    success: function (chat) {
+                        console.log(chat);
+                        $('#chatId').val(chat._id);
+                        $('#messages').empty();
+                        chat.messages.forEach(msg => {
+                            // $('#messages').append(`<div><strong>${msg.sender}: </strong>${msg.content}</div>`);
+                            if(me != msg.sender){
+                                $('#messages').append(`<div class="col-12 text-right"><span><strong> : me <br></strong><span class="me-3">${msg.content}</span></div>`);
+                            }else{
+                                $('#messages').append(`<div class="col-12"><strong>${you}: </strong> <br><span class="ms-3">${msg.content}</span></div>`);
+                                
+                            }
+                            
+                        });
+                    },
+                    error: function (err) {
+                        console.error('Error loading chat:', err);
+                    }
+                });
+            }
+
+            $('#sendMessage').click(function () {
+                let chatId = $('#chatId').val();
+                let content = $('#messageInput').val();
+
+                $.ajax({
+                    url: `/chat/${chatId}/message`,  // Adjust this URL based on your route setup
+                    method: 'POST',
+                    data: { content: content },
+                    success: function (chat) {
+                        $('#messageInput').val('');
+                        $('#messages').empty();
+                        chat.messages.forEach(msg => {
+                            if(me == msg.sender){                           
+                                $('#messages').append(`<div class="col-12" ><strong >${you}: </strong> <br><span class="ms-3">${msg.content}</span></div>`);
+                            }else{
+                                $('#messages').append(`<div class="col-12 text-right"><span><strong> : me <br></strong><span class="me-3">${msg.content}</span></div>`);
+                                
+                            }
+                        });
+                    },
+                    error: function (err) {
+                        console.error('Error sending message:', err);
+                    }
+                });
+            });
+        });
+
+
+    </script>
+</head>
+
+<body>
+    <div class="container">
+        <div class="row">
+            <h1 class="col-12">Group Chatting</h1>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="col-md-3">
+                <!-- Sidebar with user list -->
+                <div id="userList">
+                    <!-- User list will be populated here -->
+                </div>
+            </div>
+            <div class="col-md-9">
+                <div class="mt-2 p-2">
+                    <div id="messages" class="row" style="border: 1px solid #ccc; height: 400px; overflow-y: scroll;"></div>
+                    <input type="hidden" id="chatId" value="" />
+                    <input type="hidden" id="userName" value="" />
+                    <div class="row mt-2" id="hide-message">
+                        <div class="col-10">
+                            <input type="text" id="messageInput" class="form-control" />
+                        </div>
+                        <div class="col-2">
+                            <button id="sendMessage" class="btn btn-primary form-control">Send</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
