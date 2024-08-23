@@ -10,14 +10,14 @@ router.post('/register', async (req, res) => {
     const { name, email, password, age, gender } = req.body;
 
     if (!email || !password) {
-        return res.status(400).json({ message: 'Email and password are required.' });
+        return  res.redirect('/register');
     }
 
     try {
         // Check if user already exists
         const existingUser = await User.findOne({ email });
         if (existingUser) {
-            return res.status(400).json({ message: 'Email already exists.' });
+            return  res.redirect('/register');
         }
 
         // Hash the password
@@ -45,7 +45,7 @@ router.post('/register', async (req, res) => {
 router.post('/login', (req, res, next) => {
     passport.authenticate('local', (err, user, info) => {
         if (err) return next(err);
-        if (!user) return res.status(400).json({ message: info.message });
+        if (!user) return  res.redirect('/login');
         req.logIn(user, (err) => {
             if (err) return next(err);
             res.redirect('/dashboard');

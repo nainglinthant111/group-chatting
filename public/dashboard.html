@@ -13,55 +13,58 @@
         .cuscor {
             cursor: pointer;
         }
+
+        body {
+            height: 100vh;
+        }
+
+        .page-title {
+            height: 10vh;
+        }
+
+        .message-body,
+        .sidebar-body {
+            height: 70vh;
+            overflow-y: scroll;
+        }
+
+        ::-webkit-scrollbar {
+            width: 5px;
+            /* Narrow width */
+        }
+        .noti{
+           color: red;
+           font-size: 30px;
+        }
     </style>
     <script>
-        const socket = io();
         var you;
         var me;
-
-        // document.addEventListener('DOMContentLoaded', () => {
-        //     const chatId = document.getElementById('chatId').value;
-        //     const messageInput = document.getElementById('messageInput');
-        //     const sendMessageButton = document.getElementById('sendMessage');
-        //     const messagesContainer = document.getElementById('messages');
-
-        //     sendMessageButton.addEventListener('click', () => {
-        //         const message = messageInput.value;
-        //         if (message && chatId.match(/^[0-9a-fA-F]{24}$/)) {
-        //             socket.emit('private message', { chatId, content: message });
-        //             messageInput.value = '';
-        //         } else {
-        //             console.error('Invalid chatId or empty message');
-        //         }
-        //     });
-
-        //     socket.on('private message', (data) => {
-        //         if (data.chatId === chatId) {
-        //             const messageElement = document.createElement('div');
-        //             messageElement.textContent = `${data.sender}: ${data.content}`;
-        //             messagesContainer.appendChild(messageElement);
-        //             messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        //         }
-        //     });
-        // });
-
+        var myid;
         $(document).ready(function () {
-            // Fetch users on page load
+            const socket = io();
+            socket.on('receiveMessage', function ({ chatId, message,sender }) {
+                if ($('#chatId').val() == chatId) {
+                    if(sender != myid){
+                        $('#messages').append(`<div class="col-12"><strong>${you}: </strong> <br><span class="ms-3">${message}</span></div>`);
+                }
+                }
+            });
+
             $("#hide-message").addClass("d-none");
             $.ajax({
-                url: '/chat/users',  // Adjust this URL based on your route setup
+                url: '/chat/users',
                 method: 'GET',
                 success: function (data) {
                     let userList = $('#userList');
-                    userList.empty();  // Clear existing user list
+                    userList.empty();
 
                     data.forEach(user => {
                         userList.append(
 
-                            `<div class="user mt-2 cuscor ms-4" data-id="${user._id}" data-value="${user.name}">${user.name}</div>
+                            `<div class="user mt-2 cuscor ms-4" data-id="${user._id}" data-value="${user.name}">${user.name} <span class="noti text-danger d-none" id="${user._id}">!</span></div>
+                           
                 <hr class=mt-2>  `
-
-
                         );
                     });
                 },
@@ -69,12 +72,11 @@
                     console.error('Error fetching users:', err);
                 }
             });
-
-            // Handle user click event
             $('#userList').on('click', '.user', function () {
-                let userId = $(this).data('id'); 
-                you=$(this).data('value');
-                me= userId;     
+                let userId = $(this).data('id');
+                you = $(this).data('value');
+                me = userId;
+                myid=userId;
                 $("#hide-message").removeClass("d-none");
                 loadChat(userId);
             });
@@ -88,14 +90,12 @@
                         $('#chatId').val(chat._id);
                         $('#messages').empty();
                         chat.messages.forEach(msg => {
-                            // $('#messages').append(`<div><strong>${msg.sender}: </strong>${msg.content}</div>`);
-                            if(me != msg.sender){
-                                $('#messages').append(`<div class="col-12 text-right"><span><strong> : me <br></strong><span class="me-3">${msg.content}</span></div>`);
-                            }else{
+                            if (me != msg.sender) {
+                                $('#messages').append(`<div class="col-12 text-right"><span><strong> you: <br></strong><span class="me-3">${msg.content}</span></div>`);
+                            } else {
                                 $('#messages').append(`<div class="col-12"><strong>${you}: </strong> <br><span class="ms-3">${msg.content}</span></div>`);
-                                
                             }
-                            
+
                         });
                     },
                     error: function (err) {
@@ -107,7 +107,7 @@
             $('#sendMessage').click(function () {
                 let chatId = $('#chatId').val();
                 let content = $('#messageInput').val();
-
+                if (content== '') return;
                 $.ajax({
                     url: `/chat/${chatId}/message`,  // Adjust this URL based on your route setup
                     method: 'POST',
@@ -116,13 +116,15 @@
                         $('#messageInput').val('');
                         $('#messages').empty();
                         chat.messages.forEach(msg => {
-                            if(me == msg.sender){                           
+                            if (me == msg.sender) {
                                 $('#messages').append(`<div class="col-12" ><strong >${you}: </strong> <br><span class="ms-3">${msg.content}</span></div>`);
-                            }else{
-                                $('#messages').append(`<div class="col-12 text-right"><span><strong> : me <br></strong><span class="me-3">${msg.content}</span></div>`);
-                                
+                            } else {
+                                $('#messages').append(`<div class="col-12 text-right"><span><strong> you : <br></strong><span class="me-3">${msg.content}</span></div>`);
+
                             }
                         });
+                        socket.emit('sendMessage', { chatId, message: content,sender:myid });
+                        console.log('Sent message to server:', content); 
                     },
                     error: function (err) {
                         console.error('Error sending message:', err);
@@ -137,27 +139,31 @@
 
 <body>
     <div class="container">
-        <div class="row">
+        <div class="row page-title">
             <h1 class="col-12">Group Chatting</h1>
         </div>
         <hr>
-        <div class="row">
-            <div class="col-md-3">
+        <div class="row page-body">
+            <div class="col-md-3 ">
                 <!-- Sidebar with user list -->
-                <div id="userList">
+                <div id="userList" class="sidebar-body">
                     <!-- User list will be populated here -->
+                </div>
+                <div class="mt-4 px-5">
+                    <!-- <button class="btn btn-danger form-control" onclick="href='/logout'">Log Out</button> -->
+                    <a href="/logout" class="btn btn-danger form-controlr">Logout</a>
                 </div>
             </div>
             <div class="col-md-9">
                 <div class="mt-2 p-2">
-                    <div id="messages" class="row" style="border: 1px solid #ccc; height: 400px; overflow-y: scroll;"></div>
+                    <div id="messages" class="row message-body"></div>
                     <input type="hidden" id="chatId" value="" />
                     <input type="hidden" id="userName" value="" />
                     <div class="row mt-2" id="hide-message">
-                        <div class="col-10">
+                        <div class="col-lg-10 col-md-10 col-sm-8">
                             <input type="text" id="messageInput" class="form-control" />
                         </div>
-                        <div class="col-2">
+                        <div class="col-lg-2 col-md-2 col-sm-4 sm-mt-2">
                             <button id="sendMessage" class="btn btn-primary form-control">Send</button>
                         </div>
                     </div>

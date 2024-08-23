@@ -30,8 +30,6 @@ app.use(session({
   saveUninitialized: true,
 }));
 
-
-
 // Passport configuration
 require('./config/passport')(passport);
 app.use(passport.initialize());
@@ -53,41 +51,28 @@ app.get('/dashboard', (req, res) => {
   }
 });
 
+app.get('/logout', (req, res) => {
+  req.logout((err) => {
+      if (err) {
+        res.redirect('/login');
+      }
+      req.session.destroy(() => {
+          res.clearCookie('connect.sid');
+          res.redirect('/login'); 
+      });
+  });
+});
+
 io.on('connection', (socket) => {
-    console.log('A user connected');
+  console.log('A user connected');
 
-    socket.on('private message', async (msg) => {
-        if (!msg.chatId || !msg.chatId.match(/^[0-9a-fA-F]{24}$/)) {
-            return console.error('Invalid chatId');
-        }
+  socket.on('sendMessage', async ({ chatId, message,sender }) => {
+      io.emit('receiveMessage', { chatId, message,sender });
+  });
 
-        try {
-            const chat = await Chat.findById(msg.chatId);
-            if (!chat) {
-                return console.log('Chat not found');
-            }
-
-            const newMessage = {
-                sender: socket.request.user._id,
-                content: msg.content,
-            };
-
-            chat.messages.push(newMessage);
-            await chat.save();
-
-            io.to(msg.chatId).emit('private message', {
-                chatId: msg.chatId,
-                sender: socket.request.user._id,
-                content: msg.content,
-            });
-        } catch (err) {
-            console.error(err);
-        }
-    });
-
-    socket.on('disconnect', () => {
-        console.log('A user disconnected');
-    });
+  socket.on('disconnect', () => {
+      console.log('A user disconnected');
+  });
 });
 
 
