@@ -4,23 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <h1>Register</h1>
+    <div class="mt-5 row">
+        <div class="mt-2 col-4 mx-auto">
+            <h1>Register</h1>
     <form id="registerForm" action="/auth/register" method="post" >
-        <input type="text" name="name" placeholder="Name" required>
-        <input type="email" name="email" placeholder="Email" required>
-        <input type="password" name="password" placeholder="Password" required>
-        <input type="number" name="age" placeholder="Age" required>
-        <select name="gender" required>
+        <input type="text" name="name" placeholder="Name" class="form-control mt-2" required>
+        <input type="email" name="email" placeholder="Email" class="form-control mt-2" required>
+        <input type="password" name="password" placeholder="Password" class="form-control mt-2" required>
+        <input type="number" name="age" placeholder="Age" class="form-control mt-2" required>
+        <select name="gender" class="form-control mt-2" required>
             <option value="male">Male</option>
             <option value="female">Female</option>
             <option value="other">Other</option>
         </select>
-        <button type="submit">Register</button>
+        <div class="row">
+            <button type="submit" class="btn btn-primary form-control my-3 mx-5">Register</button>
+        </div>
     </form>
     <a href="/login">Already have an account? Login</a>
+        </div>
+    </div>
+    
     <script src="js/scripts.js"></script>
 </body>
 </html>
