@@ -17,7 +17,7 @@ const Chat = require('./models/Chat');
 
 
 // Middleware
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static('public'));
 
 // Database Connection
